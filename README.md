@@ -6,6 +6,8 @@ A simple express backend which uses TUS protocol to upload CSV files to a remote
 
 Clone this repo. `cd` into it and run `npm install`.
 
+Create an account with [Neon DB](https://neon.tech/) to serverlessly manage your postgres database. Don't worry, as of writing this README they have generous free tier.
+
 Create a `.env` file into the project root with atleast these environment variables:
 
 ```
@@ -20,6 +22,25 @@ JWT_SECRET
 
 // Set this to true if you want to use the PSQL to upload your files
 USE_PSQL_TO_UPLOAD
+```
+
+Go to your [Neon DB's](https://neon.tech/) SQL Editor panel to create these two tables in the given order or use any other migration technique which you are more familiar with:
+
+```sql
+CREATE TABLE users (
+    email VARCHAR(255) PRIMARY KEY NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    access_key TEXT NOT NULL
+);
+```
+
+```sql
+CREATE TABLE uploaded_files (
+    file_id SERIAL PRIMARY KEY NOT NULL,
+    email VARCHAR(255) REFERENCES Users(email) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 To start the dev server with nodemon run:
