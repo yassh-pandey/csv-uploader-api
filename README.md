@@ -124,7 +124,7 @@ npm run dev
 
     Authorization Header:
 
-    ```json
+    ```
     Bearer your.jwt.token
     ```
 
@@ -147,7 +147,7 @@ npm run dev
 
     Query Params:
 
-    ```json
+    ```
     access_key=your_access_key
     file_name=normal.csv
     ```
