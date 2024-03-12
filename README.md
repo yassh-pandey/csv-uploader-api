@@ -158,7 +158,7 @@ npm run dev
     }
     ```
 
--   File exists endpoint
+-   File Exists endpoint
 
     Request:
 
