@@ -1,4 +1,4 @@
-# React CSV Upload
+# CSV Uploader API
 
 A simple express backend which uses TUS protocol to upload CSV files to a remote file storage and then upload it into neon postgres database.
 
