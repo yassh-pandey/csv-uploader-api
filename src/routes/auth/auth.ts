@@ -25,6 +25,9 @@ authRouter.post('/sign-up', async (req: Request, res: Response) => {
         });
     }
     await validateForEmailAndPassword(req, res);
+    if (res.headersSent) {
+        return;
+    }
     const reqBody: WithEmailPassword = req.body;
     const { email, password } = reqBody;
     const hashedPassword = await hash(password, 10);
@@ -67,6 +70,9 @@ authRouter.post('/login', async (req: Request, res: Response) => {
         });
     }
     await validateForEmailAndPassword(req, res);
+    if (res.headersSent) {
+        return;
+    }
     const reqBody: WithEmailPassword = req.body;
     const { email, password } = reqBody;
     try {
