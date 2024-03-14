@@ -6,12 +6,13 @@ A simple express backend which uses TUS protocol to upload CSV files to a remote
 
 Clone this repo. `cd` into it and run `npm install`.
 
-Create an account with [Neon DB](https://neon.tech/) to serverlessly manage your postgres database. Don't worry, as of writing this README they have generous free tier.
+Create an account with [Neon DB](https://neon.tech/) to serverlessly manage your postgres database.
+Don't worry, as of March 2024 they offer a generous free tier.
 
 Create a `.env` file into the project root with atleast these environment variables:
 
 ```
-// your_localhost_port_to_run_the_server_on
+// your localhost port to run the server on
 PORT
 
 // your neon db database connection string
@@ -59,6 +60,8 @@ npm run dev
     localhost:3000
     ```
 
+    HTTP Verb: `GET`
+
     Response:
 
     ```text
@@ -91,6 +94,8 @@ npm run dev
     http://localhost:3000/auth/sign-up
     ```
 
+    HTTP Verb: `POST`
+
     Body (JSON):
 
     ```json
@@ -116,6 +121,8 @@ npm run dev
     ```curl
     http://localhost:3000/auth/login
     ```
+
+    HTTP Verb: `POST`
 
     Body (JSON):
 
@@ -143,6 +150,8 @@ npm run dev
     http://localhost:3000/access-token/generate
     ```
 
+    HTTP Verb: `GET`
+
     Authorization Header:
 
     ```
@@ -153,7 +162,7 @@ npm run dev
 
     ```json
     {
-        "accessKey": "some_access_key",
+        "access_key": "some_access_key",
         "email": "yash@sample.com"
     }
     ```
@@ -163,8 +172,10 @@ npm run dev
     Request:
 
     ```curl
-    http://localhost:3000/file-exists/
+    http://localhost:3000/file-exists
     ```
+
+    HTTP Verb: `GET`
 
     Query Params:
 
@@ -182,11 +193,145 @@ npm run dev
     }
     ```
 
+-   File Upload endpoint
+
+    Follows the [TUS protocol](https://tus.io/protocols/resumable-upload) for resumable file uploads to the native file system.
+
+    Request:
+
+    ```curl
+    http://localhost:3000/uploads
+    ```
+
+    HTTP Verv: `POST`
+
+    Request Header:
+
+    ```ts
+    {
+        "Upload-Metadata": {
+            "file_name": string,
+            "file_type": string,
+            "access_key": string,
+            "replace_existing": String(true | false),
+            "columns": String(Array<string>),
+        }
+    }
+    ```
+
+-   Query Uploaded Files endpoint
+
+    This endpoint needs some explanation. So instead of allowing users to send
+    explicit SQL queries as string, we let them pass their queries as a JSON object.
+    This object is processed in the API to construct an actual SQL query.
+    The primary reason for doing so is to have a consistent API design and to prevent security risks like SQL injection attacks.
+
+    The query object will be of the following shape:
+
+    ```ts
+    {
+        "access_key": string,
+        "select": Array<string>,
+        "from": string,
+        "limit"?: number,
+        "offset"?: number,
+        "where"?: Array<Record<string, Array<string>>>
+    }
+    ```
+
+    Right now we don't support joins and other complex nested queries. But feel free to create a PR to support that.
+
+    Now most of these fields mean what they mean in a normal SQL query with a few small caveats.
+    The `where` clause! It's best to explain with an example. A query object like this:
+
+    ```json
+    {
+        "access_key": "your_access_key",
+        "select": ["*"],
+        "from": "normal.csv",
+        "limit": 20,
+        "offset": 10,
+        "where": [
+            {
+                "CONTENT TYPE": ["SIG Newsletters", "Journals"],
+                "ISSN": ["1558-2337"]
+            },
+            {
+                "ABBR": ["SIGBIO Newsl."]
+            }
+        ]
+    }
+    ```
+
+    Will get compiled into an `SQL` query similar to something like this:
+
+    ```SQL
+    SELECT * FROM "table_name_internal_implementation"
+    WHERE (("CONTENT TYPE" = 'SIG Newsletters' OR "CONTENT TYPE" = 'Journals') AND ("ISSN" = '1558-2337'))
+    OR
+    ("ABBR" = 'SIGBIO Newsl.')
+    LIMIT 20 OFFSET 10;
+    ```
+
+    So all the objects inside the where clause are connected using the `OR` keyword. Similarly whenever any key has a value of `Array<string>` each `key = value` is also connected using the `OR` keyword.
+    Finally, different properties in the object are connected using the `AND` keyword.
+
+    I hope this explains how you'll be able to construct your own queries.
+
+    Request:
+
+    ```curl
+    http://localhost:3000/query
+    ```
+
+    HTTP Verb: `POST`
+
+    Query Params:
+
+    ```json
+    {
+        "access_key": "your_access_key",
+        "select": ["*"],
+        "from": "normal.csv",
+        "limit": 20,
+        "where": [
+            {
+                "CONTENT TYPE": ["SIG Newsletters", "Journals"],
+                "ISSN": ["1558-2337"]
+            },
+            {
+                "ABBR": ["SIGBIO Newsl."]
+            }
+        ]
+    }
+    ```
+
+    Response:
+
+    ```json
+    {
+        "CONTENT TYPE": ["SIG Newsletters", "SIG Newsletters"],
+        "TITLE": ["ACM SIGACCESS Accessibility and Computing", "ACM SIGBIO Newsletter"],
+        "ABBR": ["SIGACCESS Access. Comput.", "SIGBIO Newsl."],
+        "ISSN": ["1558-2337", "0163-5697"],
+        "e-ISSN": ["1558-1187", ""],
+        "PUBLICATION RANGE: START": ["Issue 77-78 (Sept. 2003 - Jan. 2004)", "Volume 1 Issue 2 (October 1976)"],
+        "PUBLICATION RANGE: LATEST PUBLISHED": ["Issue 107 (September 2013)", "Volume 21 Issue 1 (April 2001)"],
+        "SHORTCUT URL": ["http://dl.acm.org/citation.cfm?id=J956", "http://dl.acm.org/citation.cfm?id=J698"],
+        "ARCHIVE URL": [
+            "http://dl.acm.org/citation.cfm?id=J956&picked=prox",
+            "http://dl.acm.org/citation.cfm?id=J698&picked=prox"
+        ]
+    }
+    ```
+
 ## Basic Flow
 
 User signs up to the console application (you'll have to implement this on your own) using their email id and password. Once the user is successfully signed up, the server sends a json web token which the client can store appropriately.
 
 User can use the console application to generate an access token which they can use with the [front end sdk library](https://github.com/yassh-pandey/react-csv-upload).
+
+The key thing is that we need to make sure that files are stored seperately for each user. So that when they are querying them later on then a user has access to only those files which they had uploaded. We use the access_key to achieve that.
 
 ## Contributing
 
@@ -197,6 +342,6 @@ Please make sure to update tests as appropriate.
 
 ## License
 
-React CSV Upload is [fair-code](https://faircode.io/) distributed under distributed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) with [Commons Clause](https://commonsclause.com/) license.
+CSV Uploader API is [fair-code](https://faircode.io/) distributed under distributed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt) with [Commons Clause](https://commonsclause.com/) license.
 
 [Please click here to check the complete license.](LICENSE.md)

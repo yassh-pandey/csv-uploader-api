@@ -3,6 +3,7 @@ import accessTokenRouter from './access-token';
 import fileExistsRouter from './file-exists';
 import authRouter from './auth';
 import uploadsRouter from './uploads';
+import queryRouter from './query';
 
 const routeHandler = express.Router();
 
@@ -15,6 +16,8 @@ routeHandler.use('/auth', authRouter);
 routeHandler.use('/file-exists', fileExistsRouter);
 
 routeHandler.use('/access-token', accessTokenRouter);
+
+routeHandler.use('/query', queryRouter);
 
 routeHandler.all('*', (req, res) => {
     return res.status(404).json({

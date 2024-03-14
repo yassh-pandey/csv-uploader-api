@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { authenticateValidAccessCode, WithUserData } from '../../middlewares';
+import { authenticateValidAccessCodeFromQueryParams, WithUserData } from '../../middlewares';
 import { z } from 'zod';
 import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 
@@ -13,7 +13,7 @@ try {
     console.error(error);
 }
 if (sql !== null) {
-    fileExistsRouter.use(authenticateValidAccessCode(sql));
+    fileExistsRouter.use(authenticateValidAccessCodeFromQueryParams(sql));
 }
 
 fileExistsRouter.get('/', async (req: Request, res: Response) => {

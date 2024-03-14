@@ -8,9 +8,11 @@ const createNewTable = async function (
 ) {
     const tableName = `${email}_${file_name}`;
 
-    const client = new Client(process?.env?.DATABASE_URL ?? '');
+    let client: Client | null = null;
     const partialQuery = columns.map((column) => `"${column}" TEXT`).join(', ');
     try {
+        client = new Client(process?.env?.DATABASE_URL ?? '');
+
         await client.connect();
 
         // Begin the transaction
@@ -38,6 +40,13 @@ const createNewTable = async function (
         // Commit the transaction if all statements succeed
         await client.query('COMMIT');
     } catch (error) {
+        if (client === null) {
+            throw {
+                error,
+                source: 'createNewTable',
+                message: 'Error initializaing the database connection object.',
+            };
+        }
         // Rollback the transaction if any error occurs
         await client.query('ROLLBACK');
         throw {
@@ -46,7 +55,9 @@ const createNewTable = async function (
             message: 'Error in transaction when creating new table. Rolling back.',
         };
     } finally {
-        await client.end();
+        if (client !== null) {
+            await client.end();
+        }
     }
 };
 

@@ -2,7 +2,7 @@ import { NeonQueryFunction } from '@neondatabase/serverless';
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
-const authenticateValidAccessCode = function (sql: NeonQueryFunction<false, false>) {
+const authenticateValidAccessCodeFromQueryParams = function (sql: NeonQueryFunction<false, false>) {
     return async (req: Request, res: Response, next: NextFunction) => {
         const queryParamsSchema = z.object({
             access_key: z.string(),
@@ -58,6 +58,6 @@ interface WithUserData extends Response {
     };
 }
 
-export default authenticateValidAccessCode;
+export default authenticateValidAccessCodeFromQueryParams;
 
 export { WithUserData };

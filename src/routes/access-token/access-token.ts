@@ -37,7 +37,7 @@ accessTokenRouter.get('/generate', authenticateJwtToken, async (req: Request, re
         SET access_key = ${uploadAccessKey}
         WHERE email = ${user.email};`;
             return res.status(200).json({
-                accessKey: uploadAccessKey,
+                access_key: uploadAccessKey,
                 email: user.email,
             });
         } catch (error) {

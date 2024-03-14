@@ -1,8 +1,14 @@
 import authenticateJwtToken from './authenticateJwtToken';
 import preventFileAccessViaUploadUrl from './preventFileAccessViaUploadUrl';
-import authenticateValidAccessCode from './autheticateValidAccessCode';
-import { WithUserData } from './autheticateValidAccessCode';
+import authenticateValidAccessCodeFromQueryParams from './autheticateValidAccessCodeFromQeuryParams';
+import authenticateFileAccessForUser from './authenticateFileAccessForUser';
+import { WithUserData } from './autheticateValidAccessCodeFromQeuryParams';
 
-export { authenticateJwtToken, preventFileAccessViaUploadUrl, authenticateValidAccessCode };
+export {
+    authenticateJwtToken,
+    preventFileAccessViaUploadUrl,
+    authenticateValidAccessCodeFromQueryParams,
+    authenticateFileAccessForUser,
+};
 
 export { WithUserData };
